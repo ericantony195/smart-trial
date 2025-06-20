@@ -1,12 +1,32 @@
-import React from "react";
-import Silk from '../components/Waves.jsx';
-import ScrollVelocity from '../components/ScrollVelocity.jsx';
-
-import { useState } from "react";
+import React, { useState } from "react";
+import axios from "axios";
 import { Menu, X } from "lucide-react";
 
 export default function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [inputId, setInputId] = useState("");
+  const [clothes, setClothes] = useState([]);
+
+  const fetchClothing = async () => {
+  const cleanId = parseInt(inputId.trim());
+
+  if (!cleanId || isNaN(cleanId)) {
+    alert("Please enter a valid numeric ID.");
+    return;
+  }
+
+  try {
+    const res = await axios.post("http://127.0.0.1:3001/get-clothing", {
+      id: cleanId,
+    });
+
+    setClothes((prev) => [...prev, res.data]);
+    setInputId("");
+  } catch (err) {
+    alert("Item not found.");
+    console.error("❌ Axios error:", err.response?.data || err.message);
+  }
+};
 
   return (
     <div className="flex min-h-screen bg-white text-black font-sans transition-all">
@@ -51,7 +71,7 @@ export default function App() {
 
         {/* Grid of Clothing Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
+          {clothes.map((item, i) => (
             <div
               key={i}
               className="border border-gray-200 rounded-xl p-4 shadow hover:shadow-md transition-all duration-200"
@@ -59,12 +79,31 @@ export default function App() {
               <div className="h-40 bg-gray-200 rounded-md mb-4 flex items-center justify-center text-sm text-gray-500">
                 Image Placeholder
               </div>
-              <h3 className="text-lg font-medium">Clothing #{i + 1}</h3>
-              <p className="text-sm text-gray-500">Scanned details or tags here.</p>
+              <h3 className="text-lg font-medium">{item.name}</h3>
+              <p className="text-sm text-gray-500">Size: {item.size}</p>
+              <p className="text-sm text-gray-500">Material: {item.material}</p>
+              <p className="text-sm text-gray-500">Stock: {item.stock}</p>
             </div>
           ))}
         </div>
       </main>
+
+      {/* Input Box Bottom Right */}
+      <div className="fixed bottom-6 right-6 bg-white shadow-lg border border-gray-300 rounded-lg p-4 flex items-center gap-2">
+        <input
+          type="text"
+          value={inputId}
+          onChange={(e) => setInputId(e.target.value)}
+          placeholder="Enter Clothing ID"
+          className="border border-gray-300 px-3 py-2 rounded w-48"
+        />
+        <button
+          onClick={fetchClothing}
+          className="bg-black text-white px-4 py-2 rounded hover:bg-gray-800"
+        >
+          Fetch
+        </button>
+      </div>
     </div>
   );
 }
